@@ -1,3 +1,0 @@
-2015-10-18 18:01:59,948 INFO [RMCommunicator Allocator] org.apache.hadoop.mapreduce.v2.app.rm.RMContainerRequestor: getResources() for application_1445144423722_0020: ask=4 release= 0 newContainers=0 finishedContainers=0 resourcelimit=<memory:4096, vCores:-23> knownNMs=4
-2015-10-18 18:01:59,948 INFO [RMCommunicator Allocator] org.apache.hadoop.mapreduce.v2.app.rm.RMContainerAllocator: Recalculating schedule, headroom=<memory:4096, vCores:-23>
-2015-10-18 18:01:59,948 INFO [RMCommunicator Allocator] org.apache.hadoop.mapreduce.v2.app.rm.RMContainerAllocator: Reduce slow start threshold not met. completedMapsForReduceSlowstart 1

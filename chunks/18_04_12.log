@@ -1,5 +1,0 @@
-2015-10-18 18:04:12,065 INFO [RMCommunicator Allocator] org.apache.hadoop.mapreduce.v2.app.rm.RMContainerAllocator: Recalculating schedule, headroom=<memory:0, vCores:-27>
-2015-10-18 18:04:12,065 INFO [RMCommunicator Allocator] org.apache.hadoop.mapreduce.v2.app.rm.RMContainerAllocator: Reduce slow start threshold not met. completedMapsForReduceSlowstart 1
-2015-10-18 18:04:12,112 INFO [Socket Reader #1 for port 62270] SecurityLogger.org.apache.hadoop.ipc.Server: Auth successful for job_1445144423722_0020 (auth:SIMPLE)
-2015-10-18 18:04:12,143 INFO [IPC Server handler 10 on 62270] org.apache.hadoop.mapred.TaskAttemptListenerImpl: JVM with ID : jvm_1445144423722_0020_m_000011 asked for a task
-2015-10-18 18:04:12,143 INFO [IPC Server handler 10 on 62270] org.apache.hadoop.mapred.TaskAttemptListenerImpl: JVM with ID: jvm_1445144423722_0020_m_000011 given task: attempt_1445144423722_0020_m_000009_0

@@ -1,8 +1,0 @@
-2015-10-18 18:04:07,908 INFO [IPC Server handler 8 on 62270] org.apache.hadoop.mapred.TaskAttemptListenerImpl: Progress of TaskAttempt attempt_1445144423722_0020_m_000005_0 is : 0.10685723
-2015-10-18 18:04:07,955 INFO [RMCommunicator Allocator] org.apache.hadoop.mapreduce.v2.app.rm.RMContainerAllocator: Got allocated containers 1
-2015-10-18 18:04:07,955 INFO [RMCommunicator Allocator] org.apache.hadoop.mapreduce.v2.app.rm.RMContainerAllocator: Assigned container container_1445144423722_0020_01_000010 to attempt_1445144423722_0020_m_000008_0
-2015-10-18 18:04:07,955 INFO [RMCommunicator Allocator] org.apache.hadoop.mapreduce.v2.app.rm.RMContainerAllocator: Recalculating schedule, headroom=<memory:0, vCores:-27>
-2015-10-18 18:04:07,955 INFO [RMCommunicator Allocator] org.apache.hadoop.mapreduce.v2.app.rm.RMContainerAllocator: Reduce slow start threshold not met. completedMapsForReduceSlowstart 1
-2015-10-18 18:04:07,955 INFO [RMCommunicator Allocator] org.apache.hadoop.mapreduce.v2.app.rm.RMContainerAllocator: After Scheduling: PendingReds:1 ScheduledMaps:1 ScheduledReds:0 AssignedMaps:9 AssignedReds:0 CompletedMaps:0 CompletedReds:0 ContAlloc:9 ContRel:0 HostLocal:6 RackLocal:3
-2015-10-18 18:04:07,955 INFO [AsyncDispatcher event handler] org.apache.hadoop.yarn.util.RackResolver: Resolved MSRA-SA-39.fareast.corp.microsoft.com to /default-rack
-2015-10-18 18:04:07,955 INFO [AsyncDispatcher event handler] org.apache.hadoop.mapreduce.v2.app.job.impl.TaskAttemptImpl: attempt_1445144423722_0020_m_000008_0 TaskAttempt Transitioned from UNASSIGNED to ASSIGNED

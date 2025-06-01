@@ -1,5 +1,0 @@
-2015-10-18 18:04:38,473 INFO [IPC Server handler 6 on 62270] org.apache.hadoop.mapred.TaskAttemptListenerImpl: Progress of TaskAttempt attempt_1445144423722_0020_m_000000_0 is : 0.3624012
-2015-10-18 18:04:38,473 INFO [IPC Server handler 20 on 62270] org.apache.hadoop.mapred.TaskAttemptListenerImpl: Progress of TaskAttempt attempt_1445144423722_0020_m_000005_0 is : 0.36390656
-2015-10-18 18:04:38,723 INFO [IPC Server handler 17 on 62270] org.apache.hadoop.mapred.TaskAttemptListenerImpl: Progress of TaskAttempt attempt_1445144423722_0020_m_000007_0 is : 0.27825075
-2015-10-18 18:04:38,723 INFO [IPC Server handler 21 on 62270] org.apache.hadoop.mapred.TaskAttemptListenerImpl: Progress of TaskAttempt attempt_1445144423722_0020_m_000004_0 is : 0.36388028
-2015-10-18 18:04:38,848 INFO [IPC Server handler 0 on 62270] org.apache.hadoop.mapred.TaskAttemptListenerImpl: Progress of TaskAttempt attempt_1445144423722_0020_m_000003_0 is : 0.87672114

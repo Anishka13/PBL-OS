@@ -1,3 +1,0 @@
-2015-10-18 18:03:22,109 INFO [IPC Server handler 3 on 62270] org.apache.hadoop.mapred.TaskAttemptListenerImpl: Progress of TaskAttempt attempt_1445144423722_0020_m_000003_0 is : 0.27765483
-2015-10-18 18:03:22,437 INFO [RMCommunicator Allocator] org.apache.hadoop.mapreduce.v2.app.rm.RMContainerAllocator: Recalculating schedule, headroom=<memory:0, vCores:-27>
-2015-10-18 18:03:22,437 INFO [RMCommunicator Allocator] org.apache.hadoop.mapreduce.v2.app.rm.RMContainerAllocator: Reduce slow start threshold not met. completedMapsForReduceSlowstart 1

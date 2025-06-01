@@ -1,2 +1,0 @@
-2015-10-18 18:10:12,528 INFO [RMCommunicator Allocator] org.apache.hadoop.ipc.Client: Retrying connect to server: msra-sa-41:8030. Already tried 0 time(s); retry policy is RetryUpToMaximumCountWithFixedSleep(maxRetries=10, sleepTime=1000 MILLISECONDS)
-2015-10-18 18:10:12,528 ERROR [RMCommunicator Allocator] org.apache.hadoop.mapreduce.v2.app.rm.RMContainerAllocator: ERROR IN CONTACTING RM.
