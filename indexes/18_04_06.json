@@ -1,0 +1,37 @@
+{
+  "total_lines": 8,
+  "entries": [
+    {
+      "line_number": 1,
+      "log_type": "INFO"
+    },
+    {
+      "line_number": 2,
+      "log_type": "INFO"
+    },
+    {
+      "line_number": 3,
+      "log_type": "INFO"
+    },
+    {
+      "line_number": 4,
+      "log_type": "INFO"
+    },
+    {
+      "line_number": 5,
+      "log_type": "INFO"
+    },
+    {
+      "line_number": 6,
+      "log_type": "INFO"
+    },
+    {
+      "line_number": 7,
+      "log_type": "INFO"
+    },
+    {
+      "line_number": 8,
+      "log_type": "INFO"
+    }
+  ]
+}

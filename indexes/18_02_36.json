@@ -1,0 +1,17 @@
+{
+  "total_lines": 3,
+  "entries": [
+    {
+      "line_number": 1,
+      "log_type": "INFO"
+    },
+    {
+      "line_number": 2,
+      "log_type": "INFO"
+    },
+    {
+      "line_number": 3,
+      "log_type": "INFO"
+    }
+  ]
+}

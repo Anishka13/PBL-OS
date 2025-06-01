@@ -9,6 +9,12 @@ import tempfile
 class LogProcessor:
     def __init__(self, input_file):
         self.input_file = input_file
+        self.original_size = os.path.getsize(input_file)
+        self.chunk_sizes = {}  # Store original and compressed sizes for each chunk
+        self.index_sizes = {}  # Store original and compressed sizes for index files
+        self.total_original_size = 0  # Will include original chunks + original index files
+        self.total_compressed_size = 0  # Will include compressed chunks + compressed index files
+        
         # Create necessary directories
         self.output_dir = "chunks"
         self.index_dir = "indexes"
@@ -45,6 +51,71 @@ class LogProcessor:
         if match:
             return match.group(1)
         return "UNKNOWN"
+
+    def get_total_sizes(self):
+        """Get the total sizes and space savings."""
+        # Calculate total original size (input file)
+        input_file_size = self.original_size
+        
+        # Calculate total size of all compressed files (chunks + indexes)
+        compressed_size = 0
+        for filename in os.listdir(self.compressed_chunks_dir):
+            if filename.endswith('.gz'):
+                compressed_size += os.path.getsize(os.path.join(self.compressed_chunks_dir, filename))
+        for filename in os.listdir(self.compressed_index_dir):
+            if filename.endswith('.gz'):
+                compressed_size += os.path.getsize(os.path.join(self.compressed_index_dir, filename))
+        
+        # Calculate space savings
+        space_saved = input_file_size - compressed_size
+        savings_percentage = (space_saved / input_file_size) * 100 if input_file_size > 0 else 0
+        
+        return {
+            'input_file_size': input_file_size,
+            'total_compressed_size': compressed_size,
+            'space_saved': space_saved,
+            'savings_percentage': savings_percentage,
+            'chunk_details': self.chunk_sizes,
+            'index_details': self.index_sizes
+        }
+
+    def get_total_size_comparison(self):
+        """Calculate and compare original file size vs total size of all processed files."""
+        # Original file size
+        original_size = self.original_size
+        
+        # Calculate total size of all compressed chunks and index files
+        total_processed_size = 0
+        chunk_details = {}
+        
+        # Get details for each chunk
+        for filename in os.listdir(self.output_dir):
+            if filename.endswith('.log'):
+                time_key = filename[:-4]  # Remove .log extension
+                chunk_path = os.path.join(self.output_dir, filename)
+                compressed_chunk_path = os.path.join(self.compressed_chunks_dir, filename + '.gz')
+                index_path = os.path.join(self.compressed_index_dir, time_key + '.json.gz')
+                
+                # Get sizes
+                original_size_chunk = os.path.getsize(chunk_path)
+                compressed_size = os.path.getsize(compressed_chunk_path)
+                index_size = os.path.getsize(index_path)
+                
+                # Store details for this chunk
+                chunk_details[time_key] = {
+                    'original_size': original_size_chunk,
+                    'compressed_size': compressed_size,
+                    'index_size': index_size
+                }
+                
+                total_processed_size += compressed_size + index_size
+        
+        return {
+            'original_size': original_size,
+            'total_processed_size': total_processed_size,
+            'difference': original_size - total_processed_size,
+            'chunk_details': chunk_details
+        }
 
     def split_by_second(self):
         """Split log file into separate files based on seconds in timestamp."""
@@ -99,6 +170,10 @@ class LogProcessor:
             with open(log_file, 'w', encoding='utf-8') as f:
                 f.write('\n'.join(logs_by_second[time_key]) + '\n')  # Join with newlines
             
+            # Store original chunk size
+            original_size = os.path.getsize(log_file)
+            self.chunk_sizes[time_key] = {'original': original_size}
+            
             # Write index file
             index_file = os.path.join(self.index_dir, f"{time_key}.json")
             with open(index_file, 'w', encoding='utf-8') as f:
@@ -106,6 +181,10 @@ class LogProcessor:
                     "total_lines": len(logs_by_second[time_key]),
                     "entries": indexes_by_second[time_key]
                 }, f, indent=2)
+            
+            # Store original index size
+            index_size = os.path.getsize(index_file)
+            self.index_sizes[time_key] = {'original': index_size}
             
             print(f"Created: {time_key}.log with {len(logs_by_second[time_key])} log entries")
             print(f"Created: {time_key}.json index file")
@@ -129,6 +208,13 @@ class LogProcessor:
                 with open(input_path, 'rb') as f_in:
                     with gzip.open(output_path, 'wb') as f_out:
                         shutil.copyfileobj(f_in, f_out)
+                
+                # Store compressed chunk size
+                time_key = filename[:-4]  # Remove .log extension
+                compressed_size = os.path.getsize(output_path)
+                if time_key in self.chunk_sizes:
+                    self.chunk_sizes[time_key]['compressed'] = compressed_size
+                
                 print(f"Compressed: {filename}")
 
         # Compress index files
@@ -140,6 +226,13 @@ class LogProcessor:
                 with open(input_path, 'rb') as f_in:
                     with gzip.open(output_path, 'wb') as f_out:
                         shutil.copyfileobj(f_in, f_out)
+                
+                # Store compressed index size
+                time_key = filename[:-5]  # Remove .json extension
+                compressed_size = os.path.getsize(output_path)
+                if time_key in self.index_sizes:
+                    self.index_sizes[time_key]['compressed'] = compressed_size
+                
                 print(f"Compressed: {filename}")
 
     def view_logs_by_timestamp(self, timestamp, log_type=None):
@@ -204,27 +297,91 @@ class LogProcessor:
             except Exception as e:
                 print(f"Error reading logs: {str(e)}")
 
-    def get_original_size(self):
-        """Get the size of the original input file."""
-        return os.path.getsize(self.input_file)
-
-    def get_total_compressed_size(self):
-        """Calculate the total size of all compressed files."""
-        total_size = 0
-        
-        # Add size of compressed log files
-        if os.path.exists(self.compressed_chunks_dir):
-            for filename in os.listdir(self.compressed_chunks_dir):
-                if filename.endswith('.gz'):
-                    total_size += os.path.getsize(os.path.join(self.compressed_chunks_dir, filename))
-        
-        # Add size of compressed index files
-        if os.path.exists(self.compressed_index_dir):
-            for filename in os.listdir(self.compressed_index_dir):
-                if filename.endswith('.gz'):
-                    total_size += os.path.getsize(os.path.join(self.compressed_index_dir, filename))
-        
-        return total_size
+    def view_logs_by_timerange(self, start_timestamp, end_timestamp, log_type=None):
+        """View logs within a time range by decompressing the files temporarily.
+        Optional log_type parameter to filter logs by type (INFO, ERROR, etc.)"""
+        try:
+            # Parse the timestamps to validate format
+            start_time = datetime.strptime(start_timestamp, '%H:%M:%S')
+            end_time = datetime.strptime(end_timestamp, '%H:%M:%S')
+            
+            # Convert timestamps to file format
+            start_key = start_timestamp.replace(':', '_')
+            end_key = end_timestamp.replace(':', '_')
+            
+            # Get all log files in the compressed directory
+            log_files = sorted([f for f in os.listdir(self.compressed_chunks_dir) if f.endswith('.log.gz')])
+            
+            if not log_files:
+                print("No log files found")
+                return
+            
+            # Filter files within the time range
+            relevant_files = []
+            for log_file in log_files:
+                file_time = log_file.replace('.log.gz', '').replace('_', ':')
+                try:
+                    file_time_obj = datetime.strptime(file_time, '%H:%M:%S')
+                    if start_time <= file_time_obj <= end_time:
+                        relevant_files.append(log_file)
+                except ValueError:
+                    continue
+            
+            if not relevant_files:
+                print(f"No logs found between {start_timestamp} and {end_timestamp}")
+                return
+            
+            # Create a temporary directory
+            with tempfile.TemporaryDirectory() as temp_dir:
+                all_logs = []
+                total_lines = 0
+                
+                # Process each relevant file
+                for log_file in relevant_files:
+                    time_key = log_file.replace('.log.gz', '')
+                    compressed_log = os.path.join(self.compressed_chunks_dir, log_file)
+                    compressed_index = os.path.join(self.compressed_index_dir, f"{time_key}.json.gz")
+                    
+                    # Decompress and read the log file
+                    with gzip.open(compressed_log, 'rb') as f_in:
+                        log_content = f_in.read().decode('utf-8').splitlines()
+                    
+                    # Decompress and read the index file
+                    with gzip.open(compressed_index, 'rb') as f_in:
+                        index_content = json.loads(f_in.read().decode('utf-8'))
+                    
+                    # Filter logs if log_type is specified
+                    if log_type:
+                        # Get line numbers for the specified log type
+                        filtered_lines = []
+                        for entry in index_content['entries']:
+                            if entry['log_type'] == log_type:
+                                # Line numbers are 1-based in the index
+                                filtered_lines.append(log_content[entry['line_number'] - 1])
+                        
+                        # Update content
+                        log_content = filtered_lines
+                    
+                    all_logs.extend(log_content)
+                    total_lines += len(log_content)
+                
+                # Display the contents
+                print(f"\nLogs between {start_timestamp} and {end_timestamp}" + 
+                      (f" (filtered by {log_type})" if log_type else ""))
+                print(f"Total log entries: {total_lines}")
+                print("-" * 80)
+                
+                # Display the logs
+                for line in all_logs:
+                    if line.strip():  # Only print non-empty lines
+                        print(line.strip())
+                
+                print("-" * 80)
+            
+        except ValueError as e:
+            print(f"Invalid timestamp format: {str(e)}")
+        except Exception as e:
+            print(f"Error reading logs: {str(e)}")
 
 def main():
     # Use your specific log file
@@ -236,10 +393,11 @@ def main():
         print("1. Process and compress log files")
         print("2. View logs by timestamp")
         print("3. View filtered logs by timestamp and type")
-        print("4. Reset Processing (Use after modifying the log file)")
-        print("5. Exit")
+        print("4. View logs by time range")
+        print("5. Reset Processing (Use after modifying the log file)")
+        print("6. Exit")
         
-        choice = input("Enter your choice (1-5): ")
+        choice = input("Enter your choice (1-6): ")
         
         if choice == "1":
             print(f"\nProcessing file: {input_file}")
@@ -263,11 +421,16 @@ def main():
             processor.view_logs_by_timestamp(timestamp, log_type)
         
         elif choice == "4":
+            start_timestamp = input("\nEnter start timestamp (HH:MM:SS format): ")
+            end_timestamp = input("\nEnter end timestamp (HH:MM:SS format): ")
+            processor.view_logs_by_timerange(start_timestamp, end_timestamp)
+        
+        elif choice == "5":
             confirm = input("\nThis will delete all processed files. Are you sure? (y/n): ")
             if confirm.lower() == 'y':
                 processor.reset_processing()
         
-        elif choice == "5":
+        elif choice == "6":
             print("\nExiting program...")
             break
         

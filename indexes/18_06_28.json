@@ -1,0 +1,97 @@
+{
+  "total_lines": 23,
+  "entries": [
+    {
+      "line_number": 1,
+      "log_type": "WARN"
+    },
+    {
+      "line_number": 2,
+      "log_type": "WARN"
+    },
+    {
+      "line_number": 3,
+      "log_type": "INFO"
+    },
+    {
+      "line_number": 4,
+      "log_type": "ERROR"
+    },
+    {
+      "line_number": 5,
+      "log_type": "INFO"
+    },
+    {
+      "line_number": 6,
+      "log_type": "INFO"
+    },
+    {
+      "line_number": 7,
+      "log_type": "FATAL"
+    },
+    {
+      "line_number": 8,
+      "log_type": "INFO"
+    },
+    {
+      "line_number": 9,
+      "log_type": "INFO"
+    },
+    {
+      "line_number": 10,
+      "log_type": "INFO"
+    },
+    {
+      "line_number": 11,
+      "log_type": "INFO"
+    },
+    {
+      "line_number": 12,
+      "log_type": "INFO"
+    },
+    {
+      "line_number": 13,
+      "log_type": "INFO"
+    },
+    {
+      "line_number": 14,
+      "log_type": "INFO"
+    },
+    {
+      "line_number": 15,
+      "log_type": "INFO"
+    },
+    {
+      "line_number": 16,
+      "log_type": "WARN"
+    },
+    {
+      "line_number": 17,
+      "log_type": "WARN"
+    },
+    {
+      "line_number": 18,
+      "log_type": "INFO"
+    },
+    {
+      "line_number": 19,
+      "log_type": "INFO"
+    },
+    {
+      "line_number": 20,
+      "log_type": "INFO"
+    },
+    {
+      "line_number": 21,
+      "log_type": "INFO"
+    },
+    {
+      "line_number": 22,
+      "log_type": "INFO"
+    },
+    {
+      "line_number": 23,
+      "log_type": "INFO"
+    }
+  ]
+}

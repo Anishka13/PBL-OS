@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Log File Processor</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .log-viewer {
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            font-family: 'Consolas', monospace;
+            padding: 15px;
+            border-radius: 5px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .log-line {
+            margin: 0;
+            padding: 2px 0;
+            white-space: pre-wrap;
+        }
+        .log-type-INFO { color: #6A9955; }
+        .log-type-ERROR { color: #F14C4C; }
+        .log-type-WARN { color: #CCA700; }
+        .log-type-DEBUG { color: #569CD6; }
+        .log-type-FATAL { color: #FF0000; }
+        .chunk-details {
+            margin-top: 15px;
+            display: none;
+        }
+        .chunk-details.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-4">
+        <h1 class="mb-4">Log File Processor</h1>
+        
+        <!-- File Upload Section -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Upload Log File</h5>
+            </div>
+            <div class="card-body">
+                <form id="uploadForm" class="mb-3">
+                    <div class="mb-3">
+                        <input type="file" class="form-control" id="logFile" accept=".log">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Upload and Process</button>
+                    <button type="button" id="resetBtn" class="btn btn-danger">Reset Processing</button>
+                </form>
+                <div id="uploadStatus"></div>
+            </div>
+        </div>
+
+        <!-- Size Comparison Section (Initially Hidden) -->
+        <div id="sizeComparisonCard" class="card mb-4 d-none">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Processing Results</h5>
+                <button id="toggleChunkDetails" class="btn btn-sm btn-secondary">
+                    Show Chunk Details
+                </button>
+            </div>
+            <div class="card-body">
+                <div id="sizeDetails"></div>
+                <div id="chunkDetailsSection" class="chunk-details">
+                    <hr>
+                    <h6>Individual Chunk Details</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>Original Size</th>
+                                    <th>Compressed Size</th>
+                                    <th>Index File Size</th>
+                                    <th>Total Processed Size</th>
+                                    <th>Space Impact</th>
+                                </tr>
+                            </thead>
+                            <tbody id="chunkDetails"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Log Search Section -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Search Logs</h5>
+            </div>
+            <div class="card-body">
+                <form id="viewForm" class="row g-3 mb-3">
+                    <div class="col-md-4">
+                        <label for="startTimestamp" class="form-label">Start Time (HH:MM:SS)</label>
+                        <input type="text" class="form-control" id="startTimestamp" placeholder="18:01:54" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="endTimestamp" class="form-label">End Time (HH:MM:SS)</label>
+                        <input type="text" class="form-control" id="endTimestamp" placeholder="18:02:00">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="logType" class="form-label">Log Type</label>
+                        <select class="form-select" id="logType">
+                            <option value="">All Types</option>
+                            <option value="INFO">INFO</option>
+                            <option value="ERROR">ERROR</option>
+                            <option value="WARN">WARN</option>
+                            <option value="DEBUG">DEBUG</option>
+                            <option value="FATAL">FATAL</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary">Search Logs</button>
+                    </div>
+                </form>
+                <div id="logViewer" class="log-viewer"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Toggle chunk details visibility
+        document.getElementById('toggleChunkDetails').addEventListener('click', function() {
+            const button = this;
+            const detailsSection = document.getElementById('chunkDetailsSection');
+            const isVisible = detailsSection.classList.contains('show');
+            
+            if (isVisible) {
+                detailsSection.classList.remove('show');
+                button.textContent = 'Show Chunk Details';
+            } else {
+                detailsSection.classList.add('show');
+                button.textContent = 'Hide Chunk Details';
+            }
+        });
+
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData();
+            const fileInput = document.getElementById('logFile');
+            formData.append('file', fileInput.files[0]);
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                
+                // Display basic status
+                document.getElementById('uploadStatus').innerHTML = 
+                    `<div class="alert alert-success mt-3">${data.message} - Created ${data.chunks} chunks</div>`;
+                
+                // Show size comparison card
+                document.getElementById('sizeComparisonCard').classList.remove('d-none');
+                
+                const comparison = data.size_comparison;
+                document.getElementById('sizeDetails').innerHTML = `
+                    <p>Original File Size: ${formatBytes(comparison.original_size)}</p>
+                    <p>Total Size of Processed Files: ${formatBytes(comparison.total_processed_size)}</p>
+                    <p>Space ${comparison.difference > 0 ? 'Saved' : 'Increased'}: ${formatBytes(Math.abs(comparison.difference))}</p>
+                `;
+
+                // Prepare chunk details (but don't show by default)
+                const chunkDetails = document.getElementById('chunkDetails');
+                chunkDetails.innerHTML = '';
+                
+                Object.entries(comparison.chunk_details).sort().forEach(([timestamp, details]) => {
+                    const totalProcessedSize = details.compressed_size + details.index_size;
+                    const spaceImpact = details.original_size - totalProcessedSize;
+                    const row = `
+                        <tr>
+                            <td>${timestamp}</td>
+                            <td>${formatBytes(details.original_size)}</td>
+                            <td>${formatBytes(details.compressed_size)}</td>
+                            <td>${formatBytes(details.index_size)}</td>
+                            <td>${formatBytes(totalProcessedSize)}</td>
+                            <td style="color: ${spaceImpact >= 0 ? 'green' : 'red'}">
+                                ${spaceImpact >= 0 ? 'Saved' : 'Increased'} ${formatBytes(Math.abs(spaceImpact))}
+                            </td>
+                        </tr>
+                    `;
+                    chunkDetails.innerHTML += row;
+                });
+            } catch (error) {
+                document.getElementById('uploadStatus').innerHTML = 
+                    `<div class="alert alert-danger mt-3">Error: ${error.message}</div>`;
+                document.getElementById('sizeComparisonCard').classList.add('d-none');
+            }
+        });
+
+        document.getElementById('resetBtn').addEventListener('click', async () => {
+            try {
+                const response = await fetch('/reset', { method: 'POST' });
+                const data = await response.json();
+                document.getElementById('uploadStatus').innerHTML = 
+                    `<div class="alert alert-success mt-3">${data.message}</div>`;
+                document.getElementById('sizeComparisonCard').classList.add('d-none');
+            } catch (error) {
+                document.getElementById('uploadStatus').innerHTML = 
+                    `<div class="alert alert-danger mt-3">Error: ${error.message}</div>`;
+            }
+        });
+
+        document.getElementById('viewForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const startTimestamp = document.getElementById('startTimestamp').value;
+            const endTimestamp = document.getElementById('endTimestamp').value.trim();
+            const logType = document.getElementById('logType').value;
+            
+            try {
+                const url = new URL('/view_logs', window.location.origin);
+                url.searchParams.append('start_timestamp', startTimestamp);
+                if (endTimestamp) {
+                    url.searchParams.append('end_timestamp', endTimestamp);
+                }
+                if (logType) {
+                    url.searchParams.append('log_type', logType);
+                }
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                const logViewer = document.getElementById('logViewer');
+                logViewer.innerHTML = '';
+                
+                data.logs.forEach(log => {
+                    const logElement = document.createElement('pre');
+                    logElement.className = 'log-line';
+                    
+                    // Add color based on log type
+                    const logTypeMatch = log.match(/\s(INFO|ERROR|WARN|DEBUG|FATAL)\s/);
+                    if (logTypeMatch) {
+                        logElement.classList.add(`log-type-${logTypeMatch[1]}`);
+                    }
+                    
+                    logElement.textContent = log;
+                    logViewer.appendChild(logElement);
+                });
+            } catch (error) {
+                document.getElementById('logViewer').innerHTML = 
+                    `<div class="alert alert-danger">Error: ${error.message}</div>`;
+            }
+        });
+    </script>
+</body>
+</html> 

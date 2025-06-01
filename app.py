@@ -3,7 +3,6 @@ from log_splitter import LogProcessor
 import os
 import tempfile
 from werkzeug.utils import secure_filename
-import traceback
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
@@ -23,55 +22,44 @@ def index():
 @app.route('/upload', methods=['POST'])
 def upload_file():
     global log_processor
-    try:
-        if 'file' not in request.files:
-            return jsonify({'error': 'No file part'}), 400
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file part'}), 400
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
+    
+    if file:
+        filename = secure_filename(file.filename)
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(filepath)
         
-        file = request.files['file']
-        if file.filename == '':
-            return jsonify({'error': 'No selected file'}), 400
+        # Initialize log processor with the uploaded file
+        log_processor = LogProcessor(filepath)
+        num_chunks = log_processor.split_by_second()
+        log_processor.compress_files()
+        size_comparison = log_processor.get_total_size_comparison()
         
-        if not file.filename.endswith('.log'):
-            return jsonify({'error': 'Only .log files are allowed'}), 400
-        
-        if file:
-            filename = secure_filename(file.filename)
-            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            file.save(filepath)
-            
-            # Initialize log processor with the uploaded file
-            log_processor = LogProcessor(filepath)
-            original_size = log_processor.get_original_size()
-            num_chunks = log_processor.split_by_second()
-            log_processor.compress_files()
-            total_compressed_size = log_processor.get_total_compressed_size()
-            
-            return jsonify({
-                'message': 'File processed successfully',
-                'chunks': num_chunks,
-                'size_comparison': {
-                    'original_size': original_size,
-                    'total_processed_size': total_compressed_size,
-                    'difference': original_size - total_compressed_size
-                }
-            })
-    except Exception as e:
-        app.logger.error(f"Error processing file: {str(e)}\n{traceback.format_exc()}")
-        return jsonify({'error': f'Error processing file: {str(e)}'}), 500
+        return jsonify({
+            'message': 'File processed successfully',
+            'chunks': num_chunks,
+            'size_comparison': size_comparison
+        })
 
 @app.route('/view_logs', methods=['GET'])
 def view_logs():
     global log_processor
+    if not log_processor:
+        return jsonify({'error': 'No log file has been processed yet'}), 400
+    
+    start_timestamp = request.args.get('start_timestamp')
+    end_timestamp = request.args.get('end_timestamp')
+    log_type = request.args.get('log_type', None)
+    
+    if not start_timestamp:
+        return jsonify({'error': 'Start timestamp is required'}), 400
+    
     try:
-        if not log_processor:
-            return jsonify({'error': 'No log file has been processed yet'}), 400
-        
-        timestamp = request.args.get('timestamp')
-        log_type = request.args.get('log_type', None)
-        
-        if not timestamp:
-            return jsonify({'error': 'Timestamp is required'}), 400
-        
         # Create a temporary file to store the output
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_output = os.path.join(temp_dir, 'output.txt')
@@ -80,7 +68,10 @@ def view_logs():
                 import sys
                 original_stdout = sys.stdout
                 sys.stdout = f
-                log_processor.view_logs_by_timestamp(timestamp, log_type)
+                if end_timestamp:
+                    log_processor.view_logs_by_timerange(start_timestamp, end_timestamp, log_type)
+                else:
+                    log_processor.view_logs_by_timestamp(start_timestamp, log_type)
                 sys.stdout = original_stdout
             
             # Read the contents of the temporary file
@@ -89,21 +80,19 @@ def view_logs():
         
         return jsonify({'logs': logs})
     except Exception as e:
-        app.logger.error(f"Error viewing logs: {str(e)}\n{traceback.format_exc()}")
-        return jsonify({'error': f'Error viewing logs: {str(e)}'}), 500
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/reset', methods=['POST'])
 def reset():
     global log_processor
+    if not log_processor:
+        return jsonify({'error': 'No log file has been processed yet'}), 400
+    
     try:
-        if not log_processor:
-            return jsonify({'error': 'No log file has been processed yet'}), 400
-        
         log_processor.reset_processing()
         return jsonify({'message': 'Processing reset successfully'})
     except Exception as e:
-        app.logger.error(f"Error resetting processing: {str(e)}\n{traceback.format_exc()}")
-        return jsonify({'error': f'Error resetting processing: {str(e)}'}), 500
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True) 
